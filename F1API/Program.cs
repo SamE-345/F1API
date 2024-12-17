@@ -82,6 +82,17 @@
         public string interval { get; set; }
         
     }
+    public class F1Laps
+    {
+        [JsonProperty("driver_number")]
+        public int DriverNum { get; set; }
+        [JsonProperty("duration_sector_1")]
+        public int Sector1 { get; set; }
+        [JsonProperty("duration_sector_2")]
+        public int Sector2 { get; set; }
+        [JsonProperty("duration_sector_3")]
+        public int Sector3 { get; set; }
+    }
 
 
-}
+ }
