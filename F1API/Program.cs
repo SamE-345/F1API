@@ -27,6 +27,7 @@
         }
         
     }
+
     public class F1SessionData
     {
         [JsonProperty("meeting_key")]
