@@ -6,24 +6,55 @@
     using Newtonsoft.Json;
     using System.Collections.Generic;
     using System.Security.Cryptography;
+    using System.Diagnostics;
+    using System.ComponentModel.DataAnnotations;
 
     internal class Program
     {
 
         public static async Task Main(string[] args)
         {
-
-
-            string Temp = "2024-09-22:13:05";
-            string url = $"https://api.openf1.org/v1/car_data?driver_number=1&session_key=latest&speed>300";
-            List<F1DriverInfo> Data = await F1API.ReadDriverInfo(1);
-            if (Data != null && Data.Count > 0)
+            if (await F1API.ReadLapData(1, 55) == null)
             {
-                for (int i = 0; i < Data.Count; i++)
+                Console.WriteLine("NULL");
+            }
+            else
+            {
+                await View_Lap_Speed(15, 55);
+            }
+        }
+        public static async Task View_Lap_Speed(int lap, int driver)
+        {
+            int lapnum = lap;
+            ScottPlot.Plot myPlot = new();
+
+            string url = $"https://api.openf1.org/v1/car_data?driver_number={driver}&session_key=latest";
+            List<F1SessionData> Data = await F1API.ReadSessionData(url);
+            F1Laps lap15 = await F1API.ReadLapData(lapnum, driver);
+            F1Laps lap16 = await F1API.ReadLapData(lapnum + 1, driver);
+
+
+            int[] speeds = new int[Data.Count - 12000];
+            int[] x_axis = new int[Data.Count - 12000];
+            //Console.WriteLine(Data[15000].Date_Time.TimeOfDay);
+            for (int i = 0; i < Data.Count; i++)
+            {
+                if (Data[i].Date_Time > lap15.startTime && Data[i].Date_Time < lap16.startTime)
                 {
-                    Console.WriteLine(Data[i].acronym);
+                    x_axis[i] = i;
+                    speeds[i] = Data[i].speed;
+                }
+                else if (Data[i].Date_Time > lap16.startTime)
+                {
+                    break;
                 }
             }
+
+            myPlot.Add.Scatter(x_axis, speeds);
+            myPlot.SavePng("speedmap.png", 1000, 1000);
+            string path = "C:\\Users\\samev\\source\\repos\\F1API\\F1Api\\F1Api\\bin\\Debug\\net8.0\\speedmap.png";
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            Console.WriteLine("Graph plotted");
         }
 
     }
@@ -37,7 +68,7 @@
         [JsonProperty("driver_number")]
         public int DriverNumber { get; set; }
         [JsonProperty("date")]
-        public string DateTime { get; set; }
+        public DateTime Date_Time { get; set; }
         [JsonProperty("rpm")]
         public int RPM { get; set; }
         [JsonProperty("speed")]
@@ -93,6 +124,13 @@
         public int Sector2 { get; set; }
         [JsonProperty("duration_sector_3")]
         public int Sector3 { get; set; }
+        [JsonProperty("is_pit_out_lap")]
+        public bool Outlap {  get; set; }
+        [JsonProperty("lap_number")]
+        public int LapNum { get; set; }
+        [JsonProperty("date_start")]
+        public DateTime startTime { get; set; }
+        
     }
 
 }
